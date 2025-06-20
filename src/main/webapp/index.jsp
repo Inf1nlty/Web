@@ -349,19 +349,19 @@
 
     // 显示空状态
     function showEmptyPosts() {
-        const isLoggedIn = ${not empty sessionScope.currentUser};
-        const createPostLink = isLoggedIn ?
+        const isLoggedIn = ${not empty sessionScope.currentUser ? 'true' : 'false'};
+        const createPostLink = isLoggedIn === 'true' ?
             '<a href="${pageContext.request.contextPath}/user/createPost" class="btn btn-primary">发布帖子</a>' :
             '<a href="${pageContext.request.contextPath}/login.jsp" class="btn btn-primary">登录后发布</a>';
 
         document.getElementById('hotPostsList').innerHTML = `
-        <div class="empty-state">
-            <i class="fas fa-comments"></i>
-            <h3>还没有热门帖子</h3>
-            <p>快来发布第一个帖子吧！</p>
-            ${createPostLink}
-        </div>
-    `;
+    <div class="empty-state">
+        <i class="fas fa-comments"></i>
+        <h3>还没有热门帖子</h3>
+        <p>快来发布第一个帖子吧！</p>
+        ${createPostLink}
+    </div>
+`;
     }
 
     // 显示错误状态
