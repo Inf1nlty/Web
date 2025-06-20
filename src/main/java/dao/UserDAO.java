@@ -5,7 +5,9 @@ import util.DBUtil;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 用户数据访问对象
@@ -659,4 +661,76 @@ public class UserDAO {
             DBUtil.close(conn, pstmt);
         }
     }
+
+    /**
+     * 获取用户总数（重命名方法以保持一致性）
+     */
+    public int getUserCount() {
+        return getTotalUsersCount();
+    }
+
+    /**
+     * 获取今日注册用户数
+     */
+    public int getTodayUsersCount() {
+        String sql = "SELECT COUNT(*) FROM users WHERE DATE(create_time) = CURDATE()";
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("获取今日注册用户数失败: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            DBUtil.close(conn, pstmt, rs);
+        }
+        return 0;
+    }
+
+    /**
+     * 获取本周新用户数
+     */
+    public int getWeeklyNewUsersCount() {
+        String sql = "SELECT COUNT(*) FROM users WHERE create_time >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)";
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("获取本周新用户数失败: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            DBUtil.close(conn, pstmt, rs);
+        }
+        return 0;
+    }
+
+    /**
+     * 获取用户统计信息
+     */
+    public Map<String, Integer> getUserStatistics() {
+        Map<String, Integer> stats = new HashMap<>();
+        stats.put("total", getTotalUsersCount());
+        stats.put("active", getActiveUsersCount());
+        stats.put("today", getTodayUsersCount());
+        stats.put("weekly", getWeeklyNewUsersCount());
+        return stats;
+    }
+
 }

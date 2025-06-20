@@ -465,4 +465,65 @@ public class PostDAO {
     public List<Post> getTopHotPosts(int limit) {
         return getHotPosts(limit);
     }
+
+    /**
+     * 获取指定用户的帖子列表
+     */
+    public List<Post> getUserPosts(int userId) {
+        List<Post> posts = new ArrayList<>();
+        String sql = "SELECT p.*, u.nickname as userNickname, c.name as categoryName " +
+                "FROM posts p " +
+                "JOIN users u ON p.user_id = u.id " +
+                "JOIN categories c ON p.category_id = c.id " +
+                "WHERE p.user_id = ? AND p.status = 'normal' " +
+                "ORDER BY p.create_time DESC";
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, userId);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Post post = mapResultSetToPost(rs);
+                posts.add(post);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            DBUtil.close(conn, pstmt, rs);
+        }
+        return posts;
+    }
+
+    /**
+     * 获取用户帖子总数
+     */
+    public int getUserPostCount(int userId) {
+        String sql = "SELECT COUNT(*) FROM posts WHERE user_id = ? AND status = 'normal'";
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, userId);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            DBUtil.close(conn, pstmt, rs);
+        }
+        return 0;
+    }
+
 }
