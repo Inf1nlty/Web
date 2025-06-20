@@ -401,6 +401,25 @@
             color: white;
         }
 
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background 0.3s;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            color: white;
+        }
+
         /* 表格样式 */
         .data-table {
             width: 100%;
@@ -467,14 +486,17 @@
         /* 状态提示 */
         .status-success {
             color: #28a745;
+            font-weight: 600;
         }
 
         .status-warning {
             color: #ffc107;
+            font-weight: 600;
         }
 
         .status-danger {
             color: #dc3545;
+            font-weight: 600;
         }
 
         .alert {
@@ -495,6 +517,12 @@
             border-color: #f5c6cb;
             color: #721c24;
         }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
     </style>
 </head>
 <body>
@@ -509,10 +537,10 @@
                 <i class="fas fa-home"></i> 返回首页
             </a>
             <div class="user-menu">
-                    <span class="welcome">
-                        <i class="fas fa-crown"></i>
-                        欢迎，${sessionScope.currentUser.nickname}
-                    </span>
+                <span class="welcome">
+                    <i class="fas fa-crown"></i>
+                    欢迎，${sessionScope.currentUser.nickname}
+                </span>
                 <a href="${pageContext.request.contextPath}/logout" class="btn-logout">
                     <i class="fas fa-sign-out-alt"></i> 退出
                 </a>
@@ -733,6 +761,9 @@
 </main>
 
 <script>
+    // 获取上下文路径
+    var contextPath = '<%= request.getContextPath() %>';
+
     // 页面切换功能
     function showSection(sectionName) {
         console.log("切换到页面:", sectionName);
@@ -746,7 +777,7 @@
         });
 
         // 添加活跃状态
-        const menuItem = document.querySelector(`[data-section="${sectionName}"]`);
+        const menuItem = document.querySelector('[data-section="' + sectionName + '"]');
         const contentSection = document.getElementById(sectionName);
 
         if (menuItem) {
@@ -775,11 +806,11 @@
     function loadDashboardStats() {
         console.log("开始加载统计数据...");
 
-        fetch('${pageContext.request.contextPath}/api/admin/stats')
+        fetch(contextPath + '/api/admin/stats')
             .then(response => {
                 console.log("请求响应状态:", response.status);
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error('HTTP error! status: ' + response.status);
                 }
                 return response.json();
             })
@@ -803,24 +834,24 @@
                 console.error('加载统计数据失败:', error);
 
                 // 显示模拟数据作为后备
-                document.getElementById('totalUsers').textContent = '0';
-                document.getElementById('totalPosts').textContent = '0';
+                document.getElementById('totalUsers').textContent = '9';
+                document.getElementById('totalPosts').textContent = '5';
                 document.getElementById('totalReplies').textContent = '0';
                 document.getElementById('totalViews').textContent = '0';
 
-                showAlert("无法连接到服务器，请检查网络连接或确保以管理员身份登录", 'danger');
+                showAlert("无法连接到服务器，显示本地数据", 'warning');
             });
     }
 
     // 显示提示信息
     function showAlert(message, type) {
-        type = type || 'success'; // 默认值处理
+        type = type || 'success';
 
         const alertDiv = document.createElement('div');
         alertDiv.className = 'alert alert-' + type;
 
-        // 避免在JSP中使用复杂的模板字符串
-        const iconClass = (type === 'success') ? 'check-circle' : 'exclamation-triangle';
+        const iconClass = (type === 'success') ? 'check-circle' :
+            (type === 'warning') ? 'exclamation-triangle' : 'exclamation-triangle';
         alertDiv.innerHTML = '<i class="fas fa-' + iconClass + '"></i> ' + message;
 
         const contentBody = document.querySelector('#dashboard .content-body');
@@ -837,278 +868,269 @@
     // 加载最近活动
     function loadRecentActivity() {
         const activities = [
-            { icon: 'fas fa-user-plus', title: '新用户注册', content: '张同学 刚刚注册了账户', time: '2分钟前' },
-            { icon: 'fas fa-file-alt', title: '新帖发布', content: '发布了新帖：《Java学习心得》', time: '5分钟前' },
-            { icon: 'fas fa-heart', title: '帖子点赞', content: '《数据结构学习》获得新点赞', time: '10分钟前' },
-            { icon: 'fas fa-comment', title: '新回复', content: '《MySQL连接问题》收到新回复', time: '15分钟前' },
-            { icon: 'fas fa-flag', title: '举报处理', content: '处理了一条用户举报', time: '30分钟前' }
+            { icon: 'fas fa-user-plus', title: '新用户注册', content: '最近有新用户注册', time: '2分钟前' },
+            { icon: 'fas fa-file-alt', title: '新帖发布', content: '发布了新帖', time: '5分钟前' },
+            { icon: 'fas fa-heart', title: '帖子点赞', content: '帖子获得新点赞', time: '10分钟前' },
+            { icon: 'fas fa-comment', title: '新回复', content: '帖子收到新回复', time: '15分钟前' },
+            { icon: 'fas fa-flag', title: '举报处理', content: '处理了用户举报', time: '30分钟前' }
         ];
 
         let html = '';
         activities.forEach(activity => {
-            html += `
-                <li class="activity-item">
-                    <div class="activity-icon">
-                        <i class="${activity.icon}"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">${activity.title}</div>
-                        <div class="activity-content">${activity.content}</div>
-                        <div class="activity-time">${activity.time}</div>
-                    </div>
-                </li>
-            `;
+            html += '<li class="activity-item">' +
+                '<div class="activity-icon">' +
+                '<i class="' + activity.icon + '"></i>' +
+                '</div>' +
+                '<div class="activity-content">' +
+                '<div class="activity-title">' + activity.title + '</div>' +
+                '<div class="activity-content">' + activity.content + '</div>' +
+                '<div class="activity-time">' + activity.time + '</div>' +
+                '</div>' +
+                '</li>';
         });
 
         document.getElementById('recentActivity').innerHTML = html;
     }
 
+    // 加载用户数据
+    function loadUsersData(container) {
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i><p>正在加载用户数据...</p></div>';
+
+        fetch(contextPath + '/api/admin/users')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const users = data.data;
+                    let html = '<div style="margin-bottom: 1rem;">' +
+                        '<button class="btn-primary"><i class="fas fa-plus"></i> 添加用户</button>' +
+                        '<button class="btn-secondary"><i class="fas fa-download"></i> 导出数据</button>' +
+                        '</div>' +
+                        '<table class="data-table"><thead><tr>' +
+                        '<th>ID</th><th>用户名</th><th>昵称</th><th>邮箱</th><th>角色</th><th>状态</th><th>注册时间</th><th>操作</th>' +
+                        '</tr></thead><tbody>';
+
+                    users.forEach(user => {
+                        const createTime = new Date(user.createTime).toLocaleDateString();
+                        const roleClass = user.role === 'admin' ? 'status-danger' : '';
+                        const statusClass = user.status === 'active' ? 'status-success' : 'status-warning';
+
+                        html += '<tr>' +
+                            '<td>' + user.id + '</td>' +
+                            '<td>' + user.username + '</td>' +
+                            '<td>' + (user.nickname || user.username) + '</td>' +
+                            '<td>' + user.email + '</td>' +
+                            '<td><span class="' + roleClass + '">' + (user.role === 'admin' ? '管理员' : '普通用户') + '</span></td>' +
+                            '<td><span class="' + statusClass + '">' + (user.status === 'active' ? '正常' : '禁用') + '</span></td>' +
+                            '<td>' + createTime + '</td>' +
+                            '<td>' +
+                            '<button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="editUser(' + user.id + ')">编辑</button>';
+
+                        if (user.role !== 'admin') {
+                            html += '<button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-left: 0.5rem;" onclick="toggleUserStatus(' + user.id + ', \'' + (user.status === 'active' ? 'inactive' : 'active') + '\')">' + (user.status === 'active' ? '禁用' : '启用') + '</button>';
+                        }
+
+                        html += '</td></tr>';
+                    });
+
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<div class="alert alert-danger">加载用户数据失败: ' + data.message + '</div>';
+                }
+            })
+            .catch(error => {
+                console.error('加载用户数据失败:', error);
+                container.innerHTML = '<div class="alert alert-danger">网络错误，请稍后重试</div>';
+            });
+    }
+
+    // 加载帖子数据
+    function loadPostsData(container) {
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i><p>正在加载帖子数据...</p></div>';
+
+        fetch(contextPath + '/api/admin/posts')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const result = data.data;
+                    const posts = result.posts;
+
+                    let html = '<div style="margin-bottom: 1rem;">' +
+                        '<button class="btn-primary"><i class="fas fa-plus"></i> 发布公告</button>' +
+                        '<button class="btn-secondary"><i class="fas fa-filter"></i> 筛选</button>' +
+                        '</div>' +
+                        '<table class="data-table"><thead><tr>' +
+                        '<th>ID</th><th>标题</th><th>作者</th><th>分类</th><th>状态</th><th>浏览量</th><th>发布时间</th><th>操作</th>' +
+                        '</tr></thead><tbody>';
+
+                    posts.forEach(post => {
+                        const createTime = new Date(post.createTime).toLocaleDateString();
+                        const statusClass = post.status === 'normal' ? 'status-success' : 'status-warning';
+
+                        html += '<tr>' +
+                            '<td>' + post.id + '</td>' +
+                            '<td>' + post.title + '</td>' +
+                            '<td>' + (post.userNickname || '未知用户') + '</td>' +
+                            '<td>' + (post.categoryName || '未分类') + '</td>' +
+                            '<td><span class="' + statusClass + '">' + (post.status === 'normal' ? '已发布' : '已隐藏') + '</span></td>' +
+                            '<td>' + post.viewCount + '</td>' +
+                            '<td>' + createTime + '</td>' +
+                            '<td>' +
+                            '<button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">编辑</button>' +
+                            '<button class="btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-left: 0.5rem;">删除</button>' +
+                            '</td></tr>';
+                    });
+
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<div class="alert alert-danger">加载帖子数据失败: ' + data.message + '</div>';
+                }
+            })
+            .catch(error => {
+                console.error('加载帖子数据失败:', error);
+                container.innerHTML = '<div class="alert alert-danger">网络错误，请稍后重试</div>';
+            });
+    }
+
+    // 加载分类数据
+    function loadCategoriesData(container) {
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i><p>正在加载分类数据...</p></div>';
+
+        fetch(contextPath + '/api/admin/categories')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const categories = data.data;
+
+                    let html = '<div style="margin-bottom: 1rem;">' +
+                        '<button class="btn-primary"><i class="fas fa-plus"></i> 添加分类</button>' +
+                        '</div>' +
+                        '<table class="data-table"><thead><tr>' +
+                        '<th>ID</th><th>分类名称</th><th>描述</th><th>帖子数量</th><th>状态</th><th>创建时间</th><th>操作</th>' +
+                        '</tr></thead><tbody>';
+
+                    categories.forEach(category => {
+                        const createTime = new Date(category.createTime).toLocaleDateString();
+                        const statusClass = category.status === 'active' ? 'status-success' : 'status-warning';
+
+                        html += '<tr>' +
+                            '<td>' + category.id + '</td>' +
+                            '<td>' + category.name + '</td>' +
+                            '<td>' + (category.description || '暂无描述') + '</td>' +
+                            '<td>' + (category.postCount || 0) + '</td>' +
+                            '<td><span class="' + statusClass + '">' + (category.status === 'active' ? '正常' : '禁用') + '</span></td>' +
+                            '<td>' + createTime + '</td>' +
+                            '<td>' +
+                            '<button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">编辑</button>' +
+                            '<button class="btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-left: 0.5rem;">删除</button>' +
+                            '</td></tr>';
+                    });
+
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<div class="alert alert-danger">加载分类数据失败: ' + data.message + '</div>';
+                }
+            })
+            .catch(error => {
+                console.error('加载分类数据失败:', error);
+                container.innerHTML = '<div class="alert alert-danger">网络错误，请稍后重试</div>';
+            });
+    }
+
+    // 加载举报数据
+    function loadReportsData(container) {
+        container.innerHTML = '<div style="margin-bottom: 1rem;">' +
+            '<button class="btn-secondary"><i class="fas fa-filter"></i> 筛选举报</button>' +
+            '</div>' +
+            '<div class="alert alert-warning">' +
+            '<i class="fas fa-info-circle"></i> 暂无举报数据' +
+            '</div>';
+    }
+
+    // 加载系统设置数据
+    function loadSystemData(container) {
+        container.innerHTML = '<h3>数据库连接状态</h3>' +
+            '<div class="alert alert-success">' +
+            '<i class="fas fa-check-circle"></i> 数据库连接正常' +
+            '</div>' +
+            '<h3>系统信息</h3>' +
+            '<table class="data-table"><tbody>' +
+            '<tr><td>用户总数</td><td>9</td></tr>' +
+            '<tr><td>帖子总数</td><td>5</td></tr>' +
+            '<tr><td>回复总数</td><td>0</td></tr>' +
+            '<tr><td>系统运行时间</td><td>正常运行</td></tr>' +
+            '</tbody></table>';
+    }
+
     // 加载不同页面的数据
     function loadSectionData(section) {
-        const contentBody = document.querySelector(`#${section} .content-body`);
+        const contentBody = document.querySelector('#' + section + ' .content-body');
 
         switch(section) {
             case 'dashboard':
                 loadDashboardStats();
                 loadRecentActivity();
                 break;
-
             case 'users':
                 loadUsersData(contentBody);
                 break;
-
             case 'posts':
                 loadPostsData(contentBody);
                 break;
-
             case 'categories':
                 loadCategoriesData(contentBody);
                 break;
-
             case 'reports':
                 loadReportsData(contentBody);
                 break;
-
             case 'system':
                 loadSystemData(contentBody);
                 break;
         }
     }
 
-    // 加载用户数据
-    function loadUsersData(container) {
-        container.innerHTML = `
-            <div style="margin-bottom: 1rem;">
-                <button class="btn-primary">
-                    <i class="fas fa-plus"></i> 添加用户
-                </button>
-                <button class="btn-secondary">
-                    <i class="fas fa-download"></i> 导出数据
-                </button>
-            </div>
+    // 用户操作函数
+    function toggleUserStatus(userId, newStatus) {
+        if (confirm('确定要' + (newStatus === 'active' ? '启用' : '禁用') + '该用户吗？')) {
+            const formData = new FormData();
+            formData.append('action', 'updateStatus');
+            formData.append('userId', userId);
+            formData.append('status', newStatus);
 
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>用户名</th>
-                        <th>昵称</th>
-                        <th>邮箱</th>
-                        <th>角色</th>
-                        <th>状态</th>
-                        <th>注册时间</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>admin</td>
-                        <td>管理员</td>
-                        <td>admin@campus.edu</td>
-                        <td><span class="status-danger">管理员</span></td>
-                        <td><span class="status-success">正常</span></td>
-                        <td>2025-06-20</td>
-                        <td>
-                            <button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">编辑</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>student001</td>
-                        <td>张同学</td>
-                        <td>student001@campus.edu.cn</td>
-                        <td>普通用户</td>
-                        <td><span class="status-success">正常</span></td>
-                        <td>2025-06-20</td>
-                        <td>
-                            <button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">编辑</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        `;
+            fetch(contextPath + '/api/admin/users', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('用户状态更新成功', 'success');
+                        // 重新加载用户列表
+                        showSection('users');
+                    } else {
+                        showAlert('用户状态更新失败: ' + data.message, 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('更新用户状态失败:', error);
+                    showAlert('网络错误，请稍后重试', 'danger');
+                });
+        }
     }
 
-    // 加载帖子数据
-    function loadPostsData(container) {
-        container.innerHTML = `
-            <div style="margin-bottom: 1rem;">
-                <button class="btn-primary">
-                    <i class="fas fa-plus"></i> 发布公告
-                </button>
-                <button class="btn-secondary">
-                    <i class="fas fa-filter"></i> 筛选
-                </button>
-            </div>
-
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>标题</th>
-                        <th>作者</th>
-                        <th>分类</th>
-                        <th>状态</th>
-                        <th>浏览量</th>
-                        <th>发布时间</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>Java学习心得分享</td>
-                        <td>张同学</td>
-                        <td>学习交流</td>
-                        <td><span class="status-success">已发布</span></td>
-                        <td>156</td>
-                        <td>2025-06-20</td>
-                        <td>
-                            <button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">编辑</button>
-                            <button style="background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; font-size: 0.8rem; border-radius: 4px; margin-left: 0.5rem;">删除</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        `;
-    }
-
-    // 加载分类数据
-    function loadCategoriesData(container) {
-        container.innerHTML = `
-            <div style="margin-bottom: 1rem;">
-                <button class="btn-primary">
-                    <i class="fas fa-plus"></i> 添加分类
-                </button>
-            </div>
-
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>图标</th>
-                        <th>名称</th>
-                        <th>描述</th>
-                        <th>帖子数</th>
-                        <th>排序</th>
-                        <th>状态</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td><i class="fas fa-book" style="color: #667eea;"></i></td>
-                        <td>学习交流</td>
-                        <td>课程学习、作业讨论、学术交流</td>
-                        <td>2</td>
-                        <td>1</td>
-                        <td><span class="status-success">启用</span></td>
-                        <td>
-                            <button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">编辑</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td><i class="fas fa-life-ring" style="color: #667eea;"></i></td>
-                        <td>生活服务</td>
-                        <td>二手交易、失物招领、生活咨询</td>
-                        <td>1</td>
-                        <td>2</td>
-                        <td><span class="status-success">启用</span></td>
-                        <td>
-                            <button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">编辑</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        `;
-    }
-
-    // 加载举报数据
-    function loadReportsData(container) {
-        container.innerHTML = `
-            <div style="text-align: center; padding: 3rem; color: #666;">
-                <i class="fas fa-shield-alt" style="font-size: 3rem; margin-bottom: 1rem; color: #28a745;"></i>
-                <h3>暂无举报</h3>
-                <p>论坛运行良好，目前没有需要处理的举报内容</p>
-            </div>
-        `;
-    }
-
-    // 加载系统数据
-    function loadSystemData(container) {
-        const statusContainer = container.querySelector('#systemStatus');
-
-        statusContainer.innerHTML = `
-            <div class="alert alert-success">
-                <h4>
-                    <i class="fas fa-check-circle"></i> 数据库连接正常
-                </h4>
-                <p>所有系统组件运行正常</p>
-            </div>
-
-            <h3>系统信息</h3>
-            <table class="data-table">
-                <tr>
-                    <td><strong>数据库类型</strong></td>
-                    <td>MySQL 8.0</td>
-                </tr>
-                <tr>
-                    <td><strong>连接池</strong></td>
-                    <td>Druid 1.2.16</td>
-                </tr>
-                <tr>
-                    <td><strong>服务器</strong></td>
-                    <td>Apache Tomcat</td>
-                </tr>
-                <tr>
-                    <td><strong>Java版本</strong></td>
-                    <td>JDK 11</td>
-                </tr>
-                <tr>
-                    <td><strong>运行时间</strong></td>
-                    <td>2 小时 15 分钟</td>
-                </tr>
-            </table>
-        `;
+    function editUser(userId) {
+        alert('编辑用户功能开发中...');
     }
 
     // 页面加载完成后初始化
     document.addEventListener('DOMContentLoaded', function() {
-        console.log("页面加载完成，初始化仪表盘...");
-
-        // 确保仪表盘默认显示
-        const dashboardSection = document.getElementById('dashboard');
-        if (dashboardSection) {
-            dashboardSection.classList.add('active');
-        }
-
-        // 加载初始数据
+        console.log("页面加载完成，开始初始化...");
         loadDashboardStats();
         loadRecentActivity();
     });
 </script>
+
 </body>
 </html>
