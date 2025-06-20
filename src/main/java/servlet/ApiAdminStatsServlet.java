@@ -47,6 +47,13 @@ public class ApiAdminStatsServlet extends HttpServlet {
             statistics.put("todayPosts", postDAO.getTodayPostCount());
             statistics.put("totalLikes", postDAO.getTotalLikes());
 
+            // 添加调试日志
+            System.out.println("管理员统计数据:");
+            System.out.println("总用户数: " + statistics.get("totalUsers"));
+            System.out.println("总帖子数: " + statistics.get("totalPosts"));
+            System.out.println("总回复数: " + statistics.get("totalReplies"));
+            System.out.println("总浏览量: " + statistics.get("totalViews"));
+
             JsonResponse.success(response, "获取统计数据成功", statistics);
 
         } catch (Exception e) {
