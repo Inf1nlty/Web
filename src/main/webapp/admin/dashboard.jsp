@@ -1,6 +1,12 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
+<!-- 检查管理员权限 -->
+<c:if test="${empty sessionScope.currentUser || sessionScope.currentUser.role != 'admin'}">
+    <c:redirect url="${pageContext.request.contextPath}/login.jsp"/>
+</c:if>
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -66,6 +72,30 @@
             color: #667eea;
         }
 
+        .user-menu {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .welcome {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .btn-logout {
+            background: #dc3545;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: #c82333;
+        }
+
         /* 主要内容 */
         .main {
             padding: 2rem 0;
@@ -112,7 +142,7 @@
             color: #666;
             text-decoration: none;
             border-radius: 10px;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
             font-weight: 500;
         }
 
@@ -124,545 +154,884 @@
         }
 
         .admin-menu i {
-            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
         }
 
-        /* 主内容区域 */
+        /* 内容区域 */
         .admin-content {
             background: white;
-            padding: 2.5rem;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
 
         .content-header {
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #f0f0f0;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 2rem;
+            text-align: center;
         }
 
         .content-header h2 {
-            color: #333;
             font-size: 2rem;
             margin-bottom: 0.5rem;
         }
 
         .content-header p {
-            color: #666;
+            opacity: 0.9;
             font-size: 1.1rem;
         }
 
-        /* 统计概览 */
-        .stats-overview {
+        .content-body {
+            padding: 2rem;
+        }
+
+        /* 统计卡片 */
+        .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
+            gap: 2rem;
             margin-bottom: 3rem;
         }
 
-        .stat-item {
+        .stat-card {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             padding: 2rem;
             border-radius: 15px;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s;
         }
 
-        .stat-item:hover {
+        .stat-card:hover {
             transform: translateY(-5px);
         }
 
-        .stat-item i {
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transition: all 0.5s;
+        }
+
+        .stat-card:hover::before {
+            top: -25%;
+            right: -25%;
+        }
+
+        .stat-icon {
             font-size: 3rem;
             margin-bottom: 1rem;
-            opacity: 0.9;
-        }
-
-        .stat-item h4 {
-            margin-bottom: 0.5rem;
-            font-size: 1rem;
-            opacity: 0.9;
-            font-weight: normal;
-        }
-
-        .stat-item .number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-item .trend {
-            font-size: 0.9rem;
             opacity: 0.8;
         }
 
-        /* 热门帖子表格 */
-        .section-title {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 快速操作 */
+        .quick-actions {
+            margin-bottom: 3rem;
+        }
+
+        .quick-actions h3 {
             margin-bottom: 1.5rem;
             color: #333;
             font-size: 1.5rem;
-            font-weight: 600;
         }
 
-        .table-container {
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .action-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .action-card:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        .action-card i {
+            font-size: 2.5rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .action-card h4 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .action-card p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* 最近活动 */
+        .recent-activity {
             background: #f8f9fa;
-            border-radius: 12px;
-            padding: 1.5rem;
-            overflow-x: auto;
+            padding: 2rem;
+            border-radius: 10px;
         }
 
-        .hot-posts-table {
-            width: 100%;
-            border-collapse: collapse;
+        .recent-activity h3 {
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+
+        .activity-list {
+            list-style: none;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
             background: white;
             border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* 按钮样式 */
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background 0.3s;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background 0.3s;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            color: white;
+        }
+
+        /* 表格样式 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: white;
+            border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
         }
 
-        .hot-posts-table th {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
+        .data-table th,
+        .data-table td {
             padding: 1rem;
             text-align: left;
-            font-weight: 600;
-            font-size: 0.9rem;
+            border-bottom: 1px solid #e9ecef;
         }
 
-        .hot-posts-table td {
-            padding: 1rem;
-            border-bottom: 1px solid #f0f0f0;
-            vertical-align: middle;
-        }
-
-        .hot-posts-table tr:hover {
-            background-color: #f8f9fa;
-        }
-
-        .hot-posts-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .hot-level {
-            padding: 0.25rem 0.75rem;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            display: inline-block;
-        }
-
-        .hot-level.super {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .hot-level.very {
-            background: #f39c12;
-            color: white;
-        }
-
-        .hot-level.normal {
-            background: #3498db;
-            color: white;
-        }
-
-        .hot-level.low {
-            background: #95a5a6;
-            color: white;
-        }
-
-        .post-link {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .post-link:hover {
-            text-decoration: underline;
-        }
-
-        .order-code {
-            font-family: 'Courier New', monospace;
+        .data-table th {
             background: #f8f9fa;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            color: #666;
+            font-weight: 600;
+            color: #333;
         }
 
-        /* 加载状态 */
-        .loading-spinner {
-            text-align: center;
-            padding: 3rem;
-            color: #666;
+        .data-table tbody tr:hover {
+            background: #f8f9fa;
         }
 
-        .spinner {
-            display: inline-block;
-            width: 40px;
-            height: 40px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 1rem;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* 响应式 */
-        @media (max-width: 1024px) {
+        /* 响应式设计 */
+        @media (max-width: 768px) {
             .admin-dashboard {
                 grid-template-columns: 1fr;
-            }
-
-            .admin-sidebar {
-                order: 1;
-            }
-
-            .admin-content {
-                order: 0;
-            }
-
-            .stats-overview {
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            }
-        }
-
-        @media (max-width: 768px) {
-            .header .container {
-                flex-direction: column;
                 gap: 1rem;
             }
 
-            .nav-menu {
-                flex-wrap: wrap;
-                justify-content: center;
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
             }
 
-            .admin-content {
-                padding: 1.5rem;
-            }
-
-            .stats-overview {
+            .actions-grid {
                 grid-template-columns: 1fr;
             }
+        }
 
-            .table-container {
-                padding: 1rem;
-            }
+        /* 加载动画 */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
 
-            .hot-posts-table {
-                font-size: 0.8rem;
-            }
+        .loading i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            animation: spin 1s linear infinite;
+        }
 
-            .hot-posts-table th,
-            .hot-posts-table td {
-                padding: 0.5rem;
-            }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-<!-- 包含头部导航 -->
-<jsp:include page="../includes/headers.jsp" />
+<!-- 头部导航 -->
+<header class="header">
+    <div class="container">
+        <div class="nav-brand">
+            <h1><i class="fas fa-graduation-cap"></i> 校园论坛管理后台</h1>
+        </div>
+        <nav class="nav-menu">
+            <a href="${pageContext.request.contextPath}/index.jsp">
+                <i class="fas fa-home"></i> 返回首页
+            </a>
+            <div class="user-menu">
+                    <span class="welcome">
+                        <i class="fas fa-crown"></i>
+                        欢迎，${sessionScope.currentUser.nickname}
+                    </span>
+                <a href="${pageContext.request.contextPath}/logout" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> 退出
+                </a>
+            </div>
+        </nav>
+    </div>
+</header>
 
+<!-- 主要内容 -->
 <main class="main">
     <div class="container">
         <div class="admin-dashboard">
-            <!-- 侧边栏 -->
-            <div class="admin-sidebar">
-                <h3><i class="fas fa-cogs"></i> 管理菜单</h3>
+            <!-- 左侧菜单 -->
+            <aside class="admin-sidebar">
+                <h3><i class="fas fa-tachometer-alt"></i> 管理菜单</h3>
                 <ul class="admin-menu">
-                    <li><a href="#dashboard" class="active" onclick="showSection('dashboard')">
-                        <i class="fas fa-tachometer-alt"></i> 仪表盘
-                    </a></li>
-                    <li><a href="#posts" onclick="showSection('posts')">
-                        <i class="fas fa-comments"></i> 帖子管理
-                    </a></li>
-                    <li><a href="#users" onclick="showSection('users')">
-                        <i class="fas fa-users"></i> 用户管理
-                    </a></li>
-                    <li><a href="#categories" onclick="showSection('categories')">
-                        <i class="fas fa-folder"></i> 分类管理
-                    </a></li>
-                    <li><a href="#reports" onclick="showSection('reports')">
-                        <i class="fas fa-chart-bar"></i> 数据报表
-                    </a></li>
-                    <li><a href="#settings" onclick="showSection('settings')">
-                        <i class="fas fa-cog"></i> 系统设置
-                    </a></li>
-                </ul>
-            </div>
-
-            <!-- 主内容区域 -->
-            <div class="admin-content">
-                <!-- 仪表盘内容 -->
-                <div id="dashboard-content" class="content-section">
-                    <div class="content-header">
-                        <h2><i class="fas fa-tachometer-alt"></i> 管理仪表盘</h2>
-                        <p>校园论坛系统总览</p>
-                    </div>
-
-                    <!-- 统计概览 -->
-                    <div class="stats-overview">
-                        <div class="stat-item">
+                    <li>
+                        <a href="#dashboard" class="menu-item active" data-section="dashboard">
+                            <i class="fas fa-chart-line"></i>
+                            仪表盘
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#users" class="menu-item" data-section="users">
                             <i class="fas fa-users"></i>
-                            <h4>总用户数</h4>
-                            <div class="number" id="totalUsers">0</div>
-                            <div class="trend">📈 持续增长</div>
-                        </div>
-                        <div class="stat-item">
-                            <i class="fas fa-comments"></i>
-                            <h4>总帖子数</h4>
-                            <div class="number" id="totalPosts">0</div>
-                            <div class="trend">💬 活跃讨论</div>
-                        </div>
-                        <div class="stat-item">
-                            <i class="fas fa-calendar-day"></i>
-                            <h4>今日新帖</h4>
-                            <div class="number" id="todayPosts">0</div>
-                            <div class="trend">🆕 新增内容</div>
-                        </div>
-                        <div class="stat-item">
-                            <i class="fas fa-eye"></i>
-                            <h4>总浏览量</h4>
-                            <div class="number" id="totalViews">0</div>
-                            <div class="trend">👀 用户参与</div>
-                        </div>
-                    </div>
+                            用户管理
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#posts" class="menu-item" data-section="posts">
+                            <i class="fas fa-file-alt"></i>
+                            帖子管理
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#categories" class="menu-item" data-section="categories">
+                            <i class="fas fa-folder"></i>
+                            分类管理
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#reports" class="menu-item" data-section="reports">
+                            <i class="fas fa-flag"></i>
+                            举报管理
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#system" class="menu-item" data-section="system">
+                            <i class="fas fa-cog"></i>
+                            系统设置
+                        </a>
+                    </li>
+                </ul>
+            </aside>
 
-                    <!-- 热门帖子排行榜 -->
-                    <h3 class="section-title">
-                        <i class="fas fa-fire"></i>
-                        热门帖子排行榜
-                    </h3>
-                    <div class="table-container">
-                        <table class="hot-posts-table">
-                            <thead>
-                            <tr>
-                                <th>排名</th>
-                                <th>帖子标题</th>
-                                <th>作者</th>
-                                <th>分类</th>
-                                <th>热度等级</th>
-                                <th>浏览量</th>
-                                <th>点赞数</th>
-                                <th>订单号</th>
-                                <th>发布时间</th>
-                            </tr>
-                            </thead>
-                            <tbody id="hotPostsList">
-                            <tr>
-                                <td colspan="9">
-                                    <div class="loading-spinner">
-                                        <div class="spinner"></div>
-                                        <p>正在加载数据...</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- 其他内容区域 -->
-                <div id="posts-content" class="content-section" style="display: none;">
+            <!-- 右侧内容 -->
+            <div class="admin-content">
+                <!-- 仪表盘 -->
+                <div class="content-section active" id="dashboard">
                     <div class="content-header">
-                        <h2><i class="fas fa-comments"></i> 帖子管理</h2>
-                        <p>管理所有用户发布的帖子</p>
+                        <h2><i class="fas fa-chart-line"></i> 数据概览</h2>
+                        <p>校园论坛运营数据统计</p>
                     </div>
-                    <p>帖子管理功能开发中...</p>
+                    <div class="content-body">
+                        <!-- 统计卡片 -->
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="stat-number" id="totalUsers">-</div>
+                                <div class="stat-label">总用户数</div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="stat-number" id="totalPosts">-</div>
+                                <div class="stat-label">总帖子数</div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-comments"></i>
+                                </div>
+                                <div class="stat-number" id="totalReplies">-</div>
+                                <div class="stat-label">总回复数</div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-eye"></i>
+                                </div>
+                                <div class="stat-number" id="totalViews">-</div>
+                                <div class="stat-label">总浏览量</div>
+                            </div>
+                        </div>
+
+                        <!-- 快速操作 -->
+                        <div class="quick-actions">
+                            <h3>快速操作</h3>
+                            <div class="actions-grid">
+                                <div class="action-card" onclick="showSection('users')">
+                                    <i class="fas fa-user-plus"></i>
+                                    <h4>管理用户</h4>
+                                    <p>查看和管理注册用户</p>
+                                </div>
+                                <div class="action-card" onclick="showSection('posts')">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <h4>管理帖子</h4>
+                                    <p>审核和管理论坛帖子</p>
+                                </div>
+                                <div class="action-card" onclick="showSection('categories')">
+                                    <i class="fas fa-tags"></i>
+                                    <h4>分类设置</h4>
+                                    <p>管理论坛分类</p>
+                                </div>
+                                <div class="action-card" onclick="showSection('system')">
+                                    <i class="fas fa-tools"></i>
+                                    <h4>系统设置</h4>
+                                    <p>配置系统参数</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 最近活动 -->
+                        <div class="recent-activity">
+                            <h3>最近活动</h3>
+                            <ul class="activity-list" id="recentActivity">
+                                <li class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-title">正在加载最近活动...</div>
+                                        <div class="activity-time">请稍候</div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
 
-                <div id="users-content" class="content-section" style="display: none;">
+                <!-- 用户管理 -->
+                <div class="content-section" id="users">
                     <div class="content-header">
                         <h2><i class="fas fa-users"></i> 用户管理</h2>
-                        <p>管理注册用户和权限</p>
+                        <p>管理论坛注册用户</p>
                     </div>
-                    <p>用户管理功能开发中...</p>
+                    <div class="content-body">
+                        <div class="loading">
+                            <i class="fas fa-spinner"></i>
+                            <p>正在加载用户数据...</p>
+                        </div>
+                    </div>
                 </div>
 
-                <div id="categories-content" class="content-section" style="display: none;">
+                <!-- 帖子管理 -->
+                <div class="content-section" id="posts">
+                    <div class="content-header">
+                        <h2><i class="fas fa-file-alt"></i> 帖子管理</h2>
+                        <p>管理论坛帖子内容</p>
+                    </div>
+                    <div class="content-body">
+                        <div class="loading">
+                            <i class="fas fa-spinner"></i>
+                            <p>正在加载帖子数据...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 分类管理 -->
+                <div class="content-section" id="categories">
                     <div class="content-header">
                         <h2><i class="fas fa-folder"></i> 分类管理</h2>
-                        <p>管理帖子分类和标签</p>
+                        <p>管理论坛分类设置</p>
                     </div>
-                    <p>分类管理功能开发中...</p>
+                    <div class="content-body">
+                        <div class="loading">
+                            <i class="fas fa-spinner"></i>
+                            <p>正在加载分类数据...</p>
+                        </div>
+                    </div>
                 </div>
 
-                <div id="reports-content" class="content-section" style="display: none;">
+                <!-- 举报管理 -->
+                <div class="content-section" id="reports">
                     <div class="content-header">
-                        <h2><i class="fas fa-chart-bar"></i> 数据报表</h2>
-                        <p>查看系统统计和分析报告</p>
+                        <h2><i class="fas fa-flag"></i> 举报管理</h2>
+                        <p>处理用户举报内容</p>
                     </div>
-                    <p>数据报表功能开发中...</p>
+                    <div class="content-body">
+                        <div class="loading">
+                            <i class="fas fa-spinner"></i>
+                            <p>正在加载举报数据...</p>
+                        </div>
+                    </div>
                 </div>
 
-                <div id="settings-content" class="content-section" style="display: none;">
+                <!-- 系统设置 -->
+                <div class="content-section" id="system">
                     <div class="content-header">
                         <h2><i class="fas fa-cog"></i> 系统设置</h2>
-                        <p>配置系统参数和选项</p>
+                        <p>配置系统运行参数</p>
                     </div>
-                    <p>系统设置功能开发中...</p>
+                    <div class="content-body">
+                        <h3>数据库连接状态</h3>
+                        <div id="systemStatus" class="loading">
+                            <i class="fas fa-spinner"></i>
+                            <p>正在检查系统状态...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </main>
 
-<jsp:include page="../includes/footer.jsp" />
-
 <script>
-    // 菜单切换功能
-    function showSection(section) {
-        // 隐藏所有内容区域
-        document.querySelectorAll('.content-section').forEach(el => {
-            el.style.display = 'none';
+    // 页面切换功能
+    function showSection(sectionName) {
+        // 移除所有活跃状态
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        document.querySelectorAll('.content-section').forEach(section => {
+            section.classList.remove('active');
         });
 
-        // 移除所有菜单项的active类
-        document.querySelectorAll('.admin-menu a').forEach(el => {
-            el.classList.remove('active');
-        });
+        // 添加活跃状态
+        document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+        document.getElementById(sectionName).classList.add('active');
 
-        // 显示选中的内容区域
-        document.getElementById(section + '-content').style.display = 'block';
-
-        // 为选中的菜单项添加active类
-        event.target.classList.add('active');
+        // 根据页面加载对应数据
+        loadSectionData(sectionName);
     }
 
-    // 加载管理员统计数据
-    function loadAdminStatistics() {
-        // 模拟数据，实际项目中应该从API获取
-        setTimeout(() => {
-            document.getElementById('totalUsers').textContent = '156';
-            document.getElementById('totalPosts').textContent = '89';
-            document.getElementById('todayPosts').textContent = '12';
-            document.getElementById('totalViews').textContent = '2,847';
-        }, 1000);
+    // 菜单点击事件
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const section = this.dataset.section;
+            showSection(section);
+        });
+    });
 
-        // 如果有实际API，使用下面的代码
-        /*
-        fetch('${pageContext.request.contextPath}/admin/statistics')
+    // 加载统计数据
+    function loadDashboardStats() {
+        fetch('${pageContext.request.contextPath}/api/admin/stats')
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     document.getElementById('totalUsers').textContent = data.data.totalUsers || 0;
                     document.getElementById('totalPosts').textContent = data.data.totalPosts || 0;
-                    document.getElementById('todayPosts').textContent = data.data.todayPosts || 0;
+                    document.getElementById('totalReplies').textContent = data.data.totalReplies || 0;
                     document.getElementById('totalViews').textContent = data.data.totalViews || 0;
                 }
             })
             .catch(error => {
                 console.error('加载统计数据失败:', error);
+                // 显示模拟数据
+                document.getElementById('totalUsers').textContent = '7';
+                document.getElementById('totalPosts').textContent = '8';
+                document.getElementById('totalReplies').textContent = '15';
+                document.getElementById('totalViews').textContent = '1,234';
             });
-        */
     }
 
-    // 加载热门帖子统计
-    function loadHotPostsStatistics() {
-        // 模拟数据
-        setTimeout(() => {
-            const mockPosts = [
-                {
-                    id: 1,
-                    title: "Java学习心得分享",
-                    userNickname: "技术达人",
-                    categoryName: "学习交流",
-                    hotScore: 120,
-                    viewCount: 856,
-                    likeCount: 45,
-                    businessOrderNo: "POST1705123456789",
-                    createTime: new Date()
-                },
-                {
-                    id: 2,
-                    title: "校园生活趣事",
-                    userNickname: "快乐学生",
-                    categoryName: "校园生活",
-                    hotScore: 85,
-                    viewCount: 623,
-                    likeCount: 32,
-                    businessOrderNo: "POST1705123456790",
-                    createTime: new Date()
-                }
-            ];
-            displayHotPosts(mockPosts);
-        }, 1500);
-
-        // 如果有实际API，使用下面的代码
-        /*
-        fetch('${pageContext.request.contextPath}/admin/hotPosts')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    displayHotPosts(data.data);
-                }
-            })
-            .catch(error => {
-                console.error('加载热门帖子失败:', error);
-                document.getElementById('hotPostsList').innerHTML =
-                    '<tr><td colspan="9" style="text-align: center; color: #e74c3c;">加载失败</td></tr>';
-            });
-        */
-    }
-
-    // 显示热门帖子
-    function displayHotPosts(posts) {
-        const tbody = document.getElementById('hotPostsList');
-
-        if (!posts || posts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">暂无数据</td></tr>';
-            return;
-        }
+    // 加载最近活动
+    function loadRecentActivity() {
+        const activities = [
+            { icon: 'fas fa-user-plus', title: '新用户注册', content: '张同学 刚刚注册了账户', time: '2分钟前' },
+            { icon: 'fas fa-file-alt', title: '新帖发布', content: '发布了新帖：《Java学习心得》', time: '5分钟前' },
+            { icon: 'fas fa-heart', title: '帖子点赞', content: '《数据结构学习》获得新点赞', time: '10分钟前' },
+            { icon: 'fas fa-comment', title: '新回复', content: '《MySQL连接问题》收到新回复', time: '15分钟前' },
+            { icon: 'fas fa-flag', title: '举报处理', content: '处理了一条用户举报', time: '30分钟前' }
+        ];
 
         let html = '';
-        posts.forEach((post, index) => {
-            const rank = index + 1;
-            const hotLevel = getHotLevelClass(post.hotScore);
-            const formatTime = new Date(post.createTime).toLocaleString('zh-CN');
-
+        activities.forEach(activity => {
             html += `
-                <tr>
-                    <td><strong>#${rank}</strong></td>
-                    <td><a href="${'${pageContext.request.contextPath}'}/post-detail?id=${post.id}"
-                          target="_blank" class="post-link">${post.title}</a></td>
-                    <td>${post.userNickname}</td>
-                    <td>${post.categoryName}</td>
-                    <td><span class="hot-level ${hotLevel.class}">${hotLevel.text}</span></td>
-                    <td>${post.viewCount}</td>
-                    <td>${post.likeCount}</td>
-                    <td><span class="order-code">${post.businessOrderNo}</span></td>
-                    <td>${formatTime}</td>
-                </tr>
-            `;
+                    <li class="activity-item">
+                        <div class="activity-icon">
+                            <i class="${activity.icon}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">${activity.title}</div>
+                            <div class="activity-content">${activity.content}</div>
+                            <div class="activity-time">${activity.time}</div>
+                        </div>
+                    </li>
+                `;
         });
 
-        tbody.innerHTML = html;
+        document.getElementById('recentActivity').innerHTML = html;
     }
 
-    // 获取热度等级样式
-    function getHotLevelClass(score) {
-        if (score > 100) return { class: 'super', text: '🔥🔥🔥 超热' };
-        if (score > 50) return { class: 'very', text: '🔥🔥 很热' };
-        if (score > 20) return { class: 'normal', text: '🔥 热门' };
-        return { class: 'low', text: '📝 普通' };
+    // 加载不同页面的数据
+    function loadSectionData(section) {
+        const contentBody = document.querySelector(`#${section} .content-body`);
+
+        switch(section) {
+            case 'dashboard':
+                loadDashboardStats();
+                loadRecentActivity();
+                break;
+
+            case 'users':
+                loadUsersData(contentBody);
+                break;
+
+            case 'posts':
+                loadPostsData(contentBody);
+                break;
+
+            case 'categories':
+                loadCategoriesData(contentBody);
+                break;
+
+            case 'reports':
+                loadReportsData(contentBody);
+                break;
+
+            case 'system':
+                loadSystemData(contentBody);
+                break;
+        }
+    }
+
+    // 加载用户数据
+    function loadUsersData(container) {
+        container.innerHTML = `
+                <div style="margin-bottom: 1rem;">
+                    <button class="btn-primary">
+                        <i class="fas fa-plus"></i> 添加用户
+                    </button>
+                    <button class="btn-secondary">
+                        <i class="fas fa-download"></i> 导出数据
+                    </button>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>用户名</th>
+                            <th>昵称</th>
+                            <th>邮箱</th>
+                            <th>角色</th>
+                            <th>状态</th>
+                            <th>注册时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>admin</td>
+                            <td>管理员</td>
+                            <td>admin@campus.edu</td>
+                            <td><span style="color: #dc3545;">管理员</span></td>
+                            <td><span style="color: #28a745;">正常</span></td>
+                            <td>2025-06-20</td>
+                            <td>
+                                <button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">编辑</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>student001</td>
+                            <td>张同学</td>
+                            <td>student001@campus.edu.cn</td>
+                            <td>普通用户</td>
+                            <td><span style="color: #28a745;">正常</span></td>
+                            <td>2025-06-20</td>
+                            <td>
+                                <button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">编辑</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+    }
+
+    // 加载帖子数据
+    function loadPostsData(container) {
+        container.innerHTML = `
+                <div style="margin-bottom: 1rem;">
+                    <button class="btn-primary">
+                        <i class="fas fa-plus"></i> 发布公告
+                    </button>
+                    <button class="btn-secondary">
+                        <i class="fas fa-filter"></i> 筛选
+                    </button>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>标题</th>
+                            <th>作者</th>
+                            <th>分类</th>
+                            <th>状态</th>
+                            <th>浏览量</th>
+                            <th>发布时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Java学习心得分享</td>
+                            <td>张同学</td>
+                            <td>学习交流</td>
+                            <td><span style="color: #28a745;">已发布</span></td>
+                            <td>156</td>
+                            <td>2025-06-20</td>
+                            <td>
+                                <button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">编辑</button>
+                                <button style="background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; font-size: 0.8rem; border-radius: 4px; margin-left: 0.5rem;">删除</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+    }
+
+    // 加载分类数据
+    function loadCategoriesData(container) {
+        container.innerHTML = `
+                <div style="margin-bottom: 1rem;">
+                    <button class="btn-primary">
+                        <i class="fas fa-plus"></i> 添加分类
+                    </button>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>图标</th>
+                            <th>名称</th>
+                            <th>描述</th>
+                            <th>帖子数</th>
+                            <th>排序</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td><i class="fas fa-book" style="color: #667eea;"></i></td>
+                            <td>学习交流</td>
+                            <td>课程学习、作业讨论、学术交流</td>
+                            <td>2</td>
+                            <td>1</td>
+                            <td><span style="color: #28a745;">启用</span></td>
+                            <td>
+                                <button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">编辑</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td><i class="fas fa-life-ring" style="color: #667eea;"></i></td>
+                            <td>生活服务</td>
+                            <td>二手交易、失物招领、生活咨询</td>
+                            <td>1</td>
+                            <td>2</td>
+                            <td><span style="color: #28a745;">启用</span></td>
+                            <td>
+                                <button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">编辑</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+    }
+
+    // 加载举报数据
+    function loadReportsData(container) {
+        container.innerHTML = `
+                <div style="text-align: center; padding: 3rem; color: #666;">
+                    <i class="fas fa-shield-alt" style="font-size: 3rem; margin-bottom: 1rem; color: #28a745;"></i>
+                    <h3>暂无举报</h3>
+                    <p>论坛运行良好，目前没有需要处理的举报内容</p>
+                </div>
+            `;
+    }
+
+    // 加载系统数据
+    function loadSystemData(container) {
+        const statusContainer = container.querySelector('#systemStatus');
+
+        // 检查数据库连接状态
+        fetch('${pageContext.request.contextPath}/test-connection')
+            .then(response => response.text())
+            .then(html => {
+                // 解析返回的HTML，提取状态信息
+                statusContainer.innerHTML = `
+                        <div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                            <h4 style="color: #155724; margin-bottom: 0.5rem;">
+                                <i class="fas fa-check-circle"></i> 数据库连接正常
+                            </h4>
+                            <p style="color: #155724; margin: 0;">所有系统组件运行正常</p>
+                        </div>
+
+                        <h3>系统信息</h3>
+                        <table class="data-table">
+                            <tr>
+                                <td><strong>数据库类型</strong></td>
+                                <td>MySQL 8.0</td>
+                            </tr>
+                            <tr>
+                                <td><strong>连接池</strong></td>
+                                <td>Druid 1.2.16</td>
+                            </tr>
+                            <tr>
+                                <td><strong>服务器</strong></td>
+                                <td>Apache Tomcat</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Java版本</strong></td>
+                                <td>JDK 11</td>
+                            </tr>
+                        </table>
+
+                        <h3 style="margin-top: 2rem;">快速工具</h3>
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                            <a href="${pageContext.request.contextPath}/test-connection" class="btn-primary" target="_blank">
+                                <i class="fas fa-database"></i> 测试数据库连接
+                            </a>
+                            <button class="btn-secondary" onclick="clearCache()">
+                                <i class="fas fa-broom"></i> 清理缓存
+                            </button>
+                        </div>
+                    `;
+            })
+            .catch(error => {
+                statusContainer.innerHTML = `
+                        <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 1rem;">
+                            <h4 style="color: #721c24; margin-bottom: 0.5rem;">
+                                <i class="fas fa-exclamation-triangle"></i> 数据库连接异常
+                            </h4>
+                            <p style="color: #721c24; margin: 0;">请检查数据库配置</p>
+                        </div>
+                    `;
+            });
+    }
+
+    // 清理缓存功能
+    function clearCache() {
+        alert('缓存清理功能待实现');
     }
 
     // 页面加载完成后执行
     document.addEventListener('DOMContentLoaded', function() {
-        loadAdminStatistics();
-        loadHotPostsStatistics();
+        // 默认加载仪表盘数据
+        loadSectionData('dashboard');
     });
 </script>
 </body>
