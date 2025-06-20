@@ -42,7 +42,8 @@ target/
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
-!**/target
+!**/src/main/**/build/
+!**/src/test/**/build/
 
 ### Java ###
 *.class
