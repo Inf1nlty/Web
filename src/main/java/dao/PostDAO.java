@@ -81,6 +81,136 @@ public class PostDAO {
     }
 
     /**
+     * 搜索帖子
+     */
+    public List<Post> searchPosts(String keyword, int offset, int limit) {
+        List<Post> posts = new ArrayList<>();
+        String sql = "SELECT p.*, u.nickname as userNickname, c.name as categoryName " +
+                "FROM posts p " +
+                "JOIN users u ON p.user_id = u.id " +
+                "JOIN categories c ON p.category_id = c.id " +
+                "WHERE p.status = 'normal' AND (p.title LIKE ? OR p.content LIKE ?) " +
+                "ORDER BY p.is_top DESC, p.create_time DESC " +
+                "LIMIT ? OFFSET ?";
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            String searchPattern = "%" + keyword + "%";
+            pstmt.setString(1, searchPattern);
+            pstmt.setString(2, searchPattern);
+            pstmt.setInt(3, limit);
+            pstmt.setInt(4, offset);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Post post = mapResultSetToPost(rs);
+                posts.add(post);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            DBUtil.close(conn, pstmt, rs);
+        }
+        return posts;
+    }
+
+    /**
+     * 获取搜索结果数量
+     */
+    public int getSearchPostCount(String keyword) {
+        String sql = "SELECT COUNT(*) FROM posts WHERE status = 'normal' AND (title LIKE ? OR content LIKE ?)";
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            String searchPattern = "%" + keyword + "%";
+            pstmt.setString(1, searchPattern);
+            pstmt.setString(2, searchPattern);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            DBUtil.close(conn, pstmt, rs);
+        }
+        return 0;
+    }
+
+    /**
+     * 按分类获取帖子
+     */
+    public List<Post> getPostsByCategory(int categoryId, int offset, int limit) {
+        List<Post> posts = new ArrayList<>();
+        String sql = "SELECT p.*, u.nickname as userNickname, c.name as categoryName " +
+                "FROM posts p " +
+                "JOIN users u ON p.user_id = u.id " +
+                "JOIN categories c ON p.category_id = c.id " +
+                "WHERE p.status = 'normal' AND p.category_id = ? " +
+                "ORDER BY p.is_top DESC, p.create_time DESC " +
+                "LIMIT ? OFFSET ?";
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, categoryId);
+            pstmt.setInt(2, limit);
+            pstmt.setInt(3, offset);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Post post = mapResultSetToPost(rs);
+                posts.add(post);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            DBUtil.close(conn, pstmt, rs);
+        }
+        return posts;
+    }
+
+    /**
+     * 获取分类帖子数量
+     */
+    public int getPostCountByCategory(int categoryId) {
+        String sql = "SELECT COUNT(*) FROM posts WHERE status = 'normal' AND category_id = ?";
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, categoryId);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            DBUtil.close(conn, pstmt, rs);
+        }
+        return 0;
+    }
+
+    /**
      * 获取帖子总数
      */
     public int getPostCount() {
@@ -103,6 +233,13 @@ public class PostDAO {
             DBUtil.close(conn, pstmt, rs);
         }
         return 0;
+    }
+
+    /**
+     * 获取帖子总数（别名方法，兼容PostListServlet）
+     */
+    public int getTotalPostCount() {
+        return getPostCount();
     }
 
     /**
@@ -263,6 +400,42 @@ public class PostDAO {
     }
 
     /**
+     * 获取所有帖子（分页）
+     */
+    public List<Post> getAllPosts(int offset, int limit) {
+        List<Post> posts = new ArrayList<>();
+        String sql = "SELECT p.*, u.nickname as userNickname, c.name as categoryName " +
+                "FROM posts p " +
+                "JOIN users u ON p.user_id = u.id " +
+                "JOIN categories c ON p.category_id = c.id " +
+                "WHERE p.status = 'normal' " +
+                "ORDER BY p.is_top DESC, p.create_time DESC " +
+                "LIMIT ? OFFSET ?";
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, limit);
+            pstmt.setInt(2, offset);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Post post = mapResultSetToPost(rs);
+                posts.add(post);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            DBUtil.close(conn, pstmt, rs);
+        }
+        return posts;
+    }
+
+    /**
      * 映射ResultSet到Post对象
      */
     private Post mapResultSetToPost(ResultSet rs) throws SQLException {
@@ -291,41 +464,5 @@ public class PostDAO {
      */
     public List<Post> getTopHotPosts(int limit) {
         return getHotPosts(limit);
-    }
-
-    /**
-     * 获取所有帖子（分页）
-     */
-    public List<Post> getAllPosts(int page, int pageSize) {
-        List<Post> posts = new ArrayList<>();
-        String sql = "SELECT p.*, u.nickname as userNickname, c.name as categoryName " +
-                "FROM posts p " +
-                "JOIN users u ON p.user_id = u.id " +
-                "JOIN categories c ON p.category_id = c.id " +
-                "WHERE p.status = 'normal' " +
-                "ORDER BY p.is_top DESC, p.create_time DESC " +
-                "LIMIT ? OFFSET ?";
-
-        Connection conn = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-
-        try {
-            conn = DBUtil.getConnection();
-            pstmt = conn.prepareStatement(sql);
-            pstmt.setInt(1, pageSize);
-            pstmt.setInt(2, (page - 1) * pageSize);
-            rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-                Post post = mapResultSetToPost(rs);
-                posts.add(post);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            DBUtil.close(conn, pstmt, rs);
-        }
-        return posts;
     }
 }
