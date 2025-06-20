@@ -74,11 +74,8 @@ public class CreatePostServlet extends HttpServlet {
             boolean success = postDAO.createPost(post);
 
             if (success) {
-                // 发布成功，设置成功消息并跳转
-                session.setAttribute("successMsg",
-                        "🎉 帖子发布成功！<br>" +
-                                "📋 业务订单号: " + post.getBusinessOrderNo() + "<br>" +
-                                "🔗 分享码: " + post.getShareCode());
+                // 发布成功，跳转到首页
+                session.setAttribute("successMsg", "🎉 帖子发布成功！");
                 response.sendRedirect(request.getContextPath() + "/index.jsp");
             } else {
                 request.setAttribute("errorMsg", "发布失败，请稍后重试");

@@ -8,9 +8,9 @@
             <h1><i class="fas fa-graduation-cap"></i> 校园论坛</h1>
         </div>
         <nav class="nav-menu">
-            <a href="${pageContext.request.contextPath}/index.jsp" class="active">首页</a>
+            <a href="${pageContext.request.contextPath}/index.jsp">首页</a>
             <a href="${pageContext.request.contextPath}/posts">帖子</a>
-            <a href="#about">关于</a>
+            <a href="${pageContext.request.contextPath}/about.jsp">关于</a>
 
             <c:choose>
                 <c:when test="${not empty sessionScope.currentUser}">

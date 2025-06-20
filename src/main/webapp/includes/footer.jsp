@@ -3,7 +3,7 @@
 <!-- 页脚 -->
 <footer class="footer">
     <div class="container">
-        <p>&copy; 2025 校园论坛系统. All rights reserved.</p>
+        <p>&copy; 2025 校园论坛系统. All rights reserved. | 让知识传播，让友谊绽放</p>
         <p>当前时间: <span id="currentTime"></span> | 在线用户: ${applicationScope.onlineUserCount}</p>
     </div>
 </footer>
